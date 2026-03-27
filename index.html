@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>星露谷·极致视觉送礼助手</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="送礼助手">
+    <link rel="apple-touch-icon" href="icon.png">
+    <style>
+        :root {
+            --bg-deep: #1c140d;
+            --bg-card: #271e16;
+            --accent-gold: #dcb375;
+            --text-main: #b89f81;
+            --text-sub: #8d7963;
+            --border-color: #433324;
+            --sidebar-width: 340px;
+        }
+
+        body {
+            font-family: 'PingFang SC', sans-serif;
+            background: var(--bg-deep);
+            color: var(--text-main);
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+        }
+
+        /* 左侧：居民图鉴区 */
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px;
+            box-sizing: border-box;
+            background: radial-gradient(circle at top left, #231a12 0%, #1c140d 100%);
+        }
+
+        .content-area h2 {
+            color: var(--accent-gold);
+            font-size: 20px;
+            margin-bottom: 30px;
+            font-weight: normal;
+            letter-spacing: 3px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .npc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 25px;
+        }
+
+        .npc-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .npc-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-gold);
+        }
+
+        .npc-card img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 2px solid #33271b;
+            margin-bottom: 10px;
+        }
+
+        /* 右侧：侧边栏 */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: #2a2016;
+            border-left: 1px solid var(--accent-gold);
+            display: flex;
+            flex-direction: column;
+            box-shadow: -4px 0 15px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            border-bottom: 1px solid var(--border-color);
+            background: #32261b;
+        }
+
+        .sidebar-header h4 {
+            margin: 0 0 15px 0;
+            color: var(--accent-gold);
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        .mission-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            align-content: start;
+        }
+
+        .mission-item {
+            background: var(--bg-deep);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .mission-item.completed {
+            opacity: 0.1;
+            filter: grayscale(1);
+        }
+
+        .npc-mini-line {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+            width: 100%;
+            border-bottom: 1px solid #3d2e21;
+            padding-bottom: 6px;
+        }
+
+        .npc-mini {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            border: 1px solid var(--accent-gold);
+        }
+
+        .gift-display {
+            text-align: center;
+            padding: 5px 0;
+        }
+
+        .gift-icon {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+        }
+
+        .gift-name {
+            font-size: 11px;
+            color: #fff;
+            display: block;
+            min-height: 26px;
+        }
+
+        .gift-points {
+            font-size: 10px;
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+
+        .side-btn-group {
+            display: flex;
+            gap: 5px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .side-btn-group button {
+            font-size: 11px;
+            padding: 6px 0;
+            border-radius: 5px;
+            cursor: pointer;
+            border: 1px solid var(--accent-gold);
+            flex: 1;
+        }
+
+        .btn-rot {
+            background: transparent;
+            color: var(--accent-gold);
+        }
+
+        .btn-ok {
+            background: var(--accent-gold);
+            color: #1c140d;
+            font-weight: bold;
+        }
+
+        /* 手机端收起逻辑 */
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: var(--accent-gold);
+            color: #1c140d;
+            border-radius: 50%;
+            border: none;
+            font-size: 20px;
+            z-index: 1000;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                right: 0;
+                top: 0;
+                height: 100%;
+                transform: translateX(100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .sidebar-toggle {
+                display: block;
+            }
+        }
+
+        /* 弹窗 */
+        #detailsOverlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 100;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .detail-card {
+            background: var(--bg-deep);
+            border: 1px solid var(--accent-gold);
+            border-radius: 20px;
+            max-width: 500px;
+            margin: 40px auto;
+            padding: 30px;
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            color: var(--accent-gold);
+            font-size: 32px;
+            cursor: pointer;
+        }
+
+        .gift-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 12px;
+            margin: 15px 0 30px;
+        }
+
+        .gift-box {
+            background: var(--bg-card);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 11px;
+            border: 1px solid #444;
+        }
+
+        .gift-box img {
+            width: 30px;
+            height: 30px;
+            margin-bottom: 8px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="content-area">
+        <h2>星露谷居民图鉴</h2>
+        <div class="npc-grid" id="npcGrid"></div>
+    </div>
+
+    <button class="sidebar-toggle" onclick="toggleSidebar()">📋</button>
+
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h4>今日送礼计划</h4>
+            <button onclick="generateAllRandom()"
+                style="width:100%; padding:10px; background:var(--accent-gold); border:none; border-radius:8px; font-weight:bold; cursor:pointer;">开启新的一天</button>
+        </div>
+        <div class="mission-list" id="missionList"></div>
+    </div>
+
+    <div id="detailsOverlay">
+        <div class="detail-card">
+            <span class="close-btn" onclick="closeDetails()">&times;</span>
+            <div id="detailContent"></div>
+        </div>
+    </div>
+
+    <script>
+        const universalLoves = ["五彩碎片", "兔子脚", "珍珠", "黄金南瓜", "魔法糖冰棍", "星之果茶"];
+        const npcData = [
+            { id: "Abigail", name: "阿比盖尔", loves: ["紫水晶", "香蕉布丁", "黑莓脆皮饼", "河豚", "巧克力蛋糕", "怪物图鉴", "南瓜", "香辣鳗鱼"], likes: ["古剑", "骨笛", "石英"], done: false },
+            { id: "Alex", name: "亚历克斯", loves: ["完美早餐", "鲑鱼晚餐", "铜墙铁壁"], likes: ["恐龙蛋", "工作小食", "鹦鹉蛋"], done: false },
+            { id: "Caroline", name: "卡洛琳", loves: ["鱼肉卷", "夏季亮片", "绿茶", "热带咖喱"], likes: ["黄水仙", "茶叶", "野山葵"], done: false },
+            { id: "Clint", name: "克林特", loves: ["紫水晶", "海蓝宝石", "水煮洋蓟", "绿宝石", "金锭", "铱锭", "意式蕨菜炖饭", "翡翠", "万象晶球", "红宝石", "黄水晶"], likes: ["铜锭", "采矿月刊"], done: false },
+            { id: "Demetrius", name: "德米特里厄斯", loves: ["豆类火锅", "冰淇淋", "大米布丁", "草莓"], likes: ["紫蘑菇", "恐龙蛋", "所有水果"], done: false },
+            { id: "Dwarf", name: "矮人", loves: ["紫水晶", "海蓝宝石", "绿宝石", "翡翠", "岩浆鳗鱼", "柠檬石", "万象晶球", "红宝石", "黄水晶"], likes: ["山洞萝卜", "石英"], done: false },
+            { id: "Elliott", name: "艾利欧特", loves: ["蟹黄糕", "鸭毛", "龙虾", "石榴", "鱿鱼墨汁", "椰汁汤"], likes: ["章鱼", "鱿鱼", "所有书"], done: false },
+            { id: "Emily", name: "艾米丽", loves: ["紫水晶", "海蓝宝石", "布料", "绿宝石", "鹦鹉蛋", "翡翠", "红宝石", "救生汉堡", "黄水晶", "动物毛"], likes: ["黄水仙", "石英"], done: false },
+            { id: "Evelyn", name: "艾芙琳", loves: ["甜菜", "巧克力蛋糕", "钻石", "玫瑰仙子", "葡萄干", "塞料面包", "郁金香"], likes: ["黄水仙", "珊瑚", "海胆"], done: false },
+            { id: "George", name: "乔治", loves: ["炒蘑菇", "韭葱"], likes: ["黄水仙"], done: false },
+            { id: "Gus", name: "格斯", loves: ["钻石", "法式田螺", "鱼肉卷", "热带咖喱", "橙子"], likes: ["黄水仙", "松露"], done: false },
+            { id: "Haley", name: "海莉", loves: ["椰子", "水果沙拉", "粉红蛋糕", "向日葵"], likes: ["黄水仙"], noUniversal: ["五彩碎片"], done: false },
+            { id: "Harvey", name: "哈维", loves: ["咖啡", "腌菜", "巨无霸餐", "松露油", "果酒"], likes: ["黄水仙", "蒲公英", "鸭毛", "石英"], done: false },
+            { id: "Jas", name: "贾斯", loves: ["古代玩偶", "仙女盒", "玫瑰仙子", "粉红蛋糕", "葡萄干布丁", "诡异玩偶"], likes: ["椰子", "黄水仙"], done: false },
+            { id: "Jodi", name: "乔迪", loves: ["巧克力蛋糕", "香酥鲈鱼", "钻石", "蔬菜杂烩", "帕尔玛奶酪茄子", "薄煎饼", "大黄派", "炒鳗鱼"], likes: ["所有水果"], done: false },
+            { id: "Kent", name: "肯特", loves: ["意式蕨菜炖饭", "烤榛子"], likes: ["黄水仙", "矮人安全手册"], done: false },
+            { id: "Krobus", name: "科罗布斯", loves: ["钻石", "铱锭", "怪物图鉴", "怪兽香水", "南瓜", "虚空蛋", "虚空蛋黄酱", "野山葵"], likes: ["金锭", "石英", "海泡布丁"], done: false },
+            { id: "Leah", name: "莉亚", loves: ["山羊奶酪", "虞美人籽松糕", "沙拉", "松露", "蔬菜什锦盖饭", "蔬菜杂烩", "果酒"], likes: ["黄水仙", "蒲公英", "浮木", "野山葵"], done: false },
+            { id: "Leo", name: "雷欧", loves: ["鸭毛", "芒果", "鸵鸟蛋", "鹦鹉蛋", "夏威夷芋泥"], likes: ["龙牙", "鹦鹉螺", "石英", "海胆"], done: false },
+            { id: "Lewis", name: "刘易斯", loves: ["秋日恩赐", "琉璃山药", "辣椒", "蔬菜杂烩", "绿茶"], likes: ["蓝莓", "仙人掌果实", "椰子"], done: false },
+            { id: "Linus", name: "莱纳斯", loves: ["蓝莓千层酥", "仙人掌果实", "椰子", "海之菜肴", "小巷自助餐", "山药"], likes: ["黄水仙", "野山葵", "冬根"], done: false },
+            { id: "Marnie", name: "玛妮", loves: ["钻石", "农夫午餐", "粉红蛋糕", "南瓜派"], likes: ["星露谷年历", "石英"], done: false },
+            { id: "Maru", name: "玛鲁", loves: ["电池组", "花椰菜", "乳酪花椰菜", "钻石", "草莓", "矮人小工具", "金锭", "铱锭", "矿工特供", "爆炒青椒", "放射性矿锭", "大黄派"], likes: ["铜锭", "铁锭", "橡树树脂", "石英"], done: false },
+            { id: "Pam", name: "潘姆", loves: ["啤酒", "仙人掌果实", "琉璃山药", "淡啤酒", "蜜蜂酒", "防风草", "防风草汤", "椰林飘香"], likes: ["所有水果"], done: false },
+            { id: "Penny", name: "潘妮", loves: ["钻石", "绿宝石", "甜瓜", "虞美人", "虞美人籽松糕", "红之盛宴", "块茎拼盘", "沙鱼", "椰汁汤", "所有书"], likes: ["蒲公英", "韭葱"], noUniversal: ["兔子脚"], done: false },
+            { id: "Pierre", name: "皮埃尔", loves: ["炸鱿鱼", "价格目录"], likes: ["黄水仙", "蒲公英"], done: false },
+            { id: "Robin", name: "罗宾", loves: ["山羊奶酪", "桃子", "意大利面", "伐木秘事"], likes: ["硬木", "石英", "樵夫周刊"], done: false },
+            { id: "Sam", name: "山姆", loves: ["仙人掌果实", "枫糖棒", "披萨", "虎眼石"], likes: ["Joja可乐", "所有蛋(除虚空蛋)"], done: false },
+            { id: "Sandy", name: "桑迪", loves: ["番红花", "黄水仙", "芒果糯米饭", "甜豌豆"], likes: ["羊奶", "大瓶羊奶", "石英"], done: false },
+            { id: "Sebastian", name: "塞巴斯蒂安", loves: ["青蛙蛋", "泪晶", "黑曜石", "南瓜汤", "生鱼片", "虚空蛋"], likes: ["战斗季刊", "比目鱼", "怪物图鉴", "石英"], done: false },
+            { id: "Shane", name: "谢恩", loves: ["啤酒", "辣椒", "爆炒青椒", "披萨"], likes: ["所有蛋(除虚空蛋)", "所有水果"], done: false },
+            { id: "Vincent", name: "文森特", loves: ["蔓越莓糖果", "青蛙蛋", "姜汁汽水", "葡萄", "粉红蛋糕", "蜗牛"], likes: ["椰子", "黄水仙"], done: false },
+            { id: "Willy", name: "威利", loves: ["鲶鱼", "钻石", "金锭", "铱锭", "海之宝石", "蜜蜂酒", "章鱼", "南瓜", "海参", "鲟鱼", "捕蟹秘籍"], likes: ["鱼饵和浮漂", "虎纹鳟鱼"], done: false },
+            { id: "Wizard", name: "法师", loves: ["谜之书", "紫蘑菇", "太阳精华", "虚空精华", "大海参"], likes: ["铱锭", "石英", "所有晶球矿物"], done: false }
+        ];
+
+        function getFullLoves(npc) {
+            let list = [...npc.loves];
+            universalLoves.forEach(u => { if (!npc.noUniversal || !npc.noUniversal.includes(u)) list.push(u); });
+            return list;
+        }
+
+        function getIcon(name) { return `<img src="gifts/${name}.png" class="gift-icon" onerror="this.src='https://via.placeholder.com/32/2a2016/dcb375?text=?';">`; }
+
+        function refreshUI() { renderMissions(); renderGrid(); }
+
+        function renderGrid() {
+            document.getElementById('npcGrid').innerHTML = npcData.map(n => `
+                <div class="npc-card" onclick="openDetails('${n.id}')">
+                    <img src="portraits/${n.id}.png" onerror="this.src='https://via.placeholder.com/80/433324/dcb375?text=${n.name[0]}'">
+                    <div class="npc-name">${n.name}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderMissions() {
+            document.getElementById('missionList').innerHTML = npcData.map(n => `
+                <div class="mission-item ${n.done ? 'completed' : ''}">
+                    <div class="npc-mini-line">
+                        <img src="portraits/${n.id}.png" class="npc-mini">
+                        <span class="npc-mini-name">${n.name}</span>
+                    </div>
+                    <div class="gift-display">
+                        ${getIcon(n.currentGift)}
+                        <span class="gift-name">${n.currentGift}</span>
+                        <span class="gift-points">${n.isLove ? '+80' : '+45'}</span>
+                    </div>
+                    <div class="side-btn-group">
+                        <button class="btn-rot" onclick="rotate('${n.id}')">换</button>
+                        <button class="btn-ok" onclick="toggle('${n.id}')">${n.done ? '✓' : '送'}</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function generateAllRandom() {
+            npcData.forEach(n => {
+                const loves = getFullLoves(n);
+                n.currentGift = loves[0]; // 默认选第一个最爱
+                n.isLove = true;
+                n.done = false;
+            });
+            refreshUI();
+        }
+
+        // 核心修复：100% 无限循环逻辑
+        window.rotate = (id) => {
+            const n = npcData.find(x => x.id === id);
+            const loves = getFullLoves(n);
+            const likes = n.likes || [];
+            const combined = [...loves, ...likes]; // 合并所有可用列表
+
+            let currentIdx = combined.indexOf(n.currentGift);
+
+            // 使用取模运算实现无限循环：(当前索引 + 1) 除以 总长度的余数
+            // 这样当到最后一项时，(length-1 + 1) % length 会等于 0，自动回到第一项
+            let nextIdx = (currentIdx + 1) % combined.length;
+
+            n.currentGift = combined[nextIdx];
+            n.isLove = loves.includes(n.currentGift); // 重新判定是否属于最爱
+            refreshUI();
+        }
+
+        window.toggle = (id) => {
+            const n = npcData.find(x => x.id === id);
+            n.done = !n.done;
+            refreshUI();
+        }
+
+        window.toggleSidebar = () => document.querySelector('.sidebar').classList.toggle('active');
+
+        window.openDetails = (id) => {
+            const n = npcData.find(x => x.id === id);
+            const loves = getFullLoves(n);
+            document.getElementById('detailContent').innerHTML = `
+                <h3 style="color:var(--accent-gold);margin-top:0;">${n.name}</h3>
+                <div style="color:#ff6b6b; font-size:14px; margin-top:20px;">💖 最爱 (+80)</div>
+                <div class="gift-row">${loves.map(g => `<div class="gift-box">${getIcon(g)}<div>${g}</div></div>`).join('')}</div>
+                <div style="color:#ffd93d; font-size:14px;">😊 喜欢 (+45)</div>
+                <div class="gift-row">${n.likes.map(g => `<div class="gift-box">${getIcon(g)}<div>${g}</div></div>`).join('')}</div>
+            `;
+            document.getElementById('detailsOverlay').style.display = 'block';
+        }
+
+        window.closeDetails = () => document.getElementById('detailsOverlay').style.display = 'none';
+
+        generateAllRandom();
+    </script>
+</body>
+
+</html>

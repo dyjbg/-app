@@ -1,0 +1,25 @@
+{
+    "name": "星露谷送礼大师",
+    "short_name": "送礼助手",
+    "description": "星露谷物语居民 1.6 版本送礼清单，支持离线查询",
+    "start_url": "index.html",
+    "display": "standalone",
+    "orientation": "portrait",
+    "background_color": "#1c140d",
+    "theme_color": "#dcb375",
+    "lang": "zh-CN",
+    "icons": [
+        {
+            "src": "icon.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "icon.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}
